@@ -1,0 +1,43 @@
+{
+  "header_analyzer": {
+    "score": 10,
+    "status": "suspicious",
+    "anomalies": {
+      "reply_to_domain_mismatch": true
+    },
+    "findings": [
+      {
+        "indicator": "reply_to_domain_mismatch",
+        "severity": "medium",
+        "score": 8,
+        "description": "Reply-To domain differs from From domain."
+      }
+    ]
+  },
+  "url_analyzer": {
+    "score": 25,
+    "status": "suspicious",
+    "statistics": {
+      "url_count": 1,
+      "high_risk_urls": 0,
+      "suspicious_urls": 1
+    },
+    "findings": [
+      {
+        "indicator": "suspicious_url",
+        "severity": "medium",
+        "score": 15,
+        "description": "The URL contains suspicious characteristics."
+      }
+    ]
+  },
+  "html_analyzer": {
+    "score": 0,
+    "status": "normal",
+    "statistics": {
+      "form_count": 0,
+      "password_input_count": 0
+    },
+    "findings": []
+  }
+}
