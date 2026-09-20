@@ -11,11 +11,63 @@ import {
   FileText,
   Download,
   Lock,
+  Shield,
+  Sparkles,
+  Bug,
+  RefreshCw,
+  ArrowLeft,
+  Link2,
 } from "lucide-react";
 import "./App.css";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5000";
+
+function severityTone(value) {
+  const v = String(value || "")
+    .toLowerCase()
+    .replaceAll("_", " ")
+    .trim();
+
+  if (
+    v.includes("critical") ||
+    v.includes("phishing") ||
+    v === "yes" ||
+    v.includes("quarantined")
+  ) {
+    return "critical";
+  }
+
+  if (v.includes("high") || v.includes("suspicious") || v.includes("danger")) {
+    return "high";
+  }
+
+  if (v.includes("medium") || v.includes("warn")) {
+    return "medium";
+  }
+
+  if (
+    v.includes("low") ||
+    v.includes("safe") ||
+    v.includes("normal") ||
+    v.includes("completed") ||
+    v === "no" ||
+    v.includes("success")
+  ) {
+    return "low";
+  }
+
+  return "info";
+}
+
+function formatLabel(value) {
+  if (value == null || value === "") return "Unknown";
+  return String(value).replaceAll("_", " ");
+}
+
+function formatUpper(value) {
+  return formatLabel(value).toUpperCase();
+}
 
 function App() {
   const [file, setFile] = useState(null);
@@ -36,16 +88,10 @@ function App() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.error || "Unable to load analysis history."
-        );
+        throw new Error(data.error || "Unable to load analysis history.");
       }
 
-      setHistory(
-        Array.isArray(data.records)
-          ? data.records
-          : []
-      );
+      setHistory(Array.isArray(data.records) ? data.records : []);
     } catch (err) {
       console.error("History loading failed:", err);
     } finally {
@@ -57,41 +103,30 @@ function App() {
     loadHistory();
   }, []);
 
-
-const loadHistoryDetail = async (analysisId) => {
+  const loadHistoryDetail = async (analysisId) => {
     setHistoryDetailLoading(true);
     setError("");
 
     try {
-        const response = await fetch(
-            `${API_BASE}/api/history/${analysisId}`
-        );
+      const response = await fetch(`${API_BASE}/api/history/${analysisId}`);
+      const data = await response.json();
 
-        const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to load analysis details.");
+      }
 
-        if (!response.ok) {
-            throw new Error(
-                data.error || "Unable to load analysis details."
-            );
-        }
-
-        setHistoryDetail(data.analysis);
+      setHistoryDetail(data.analysis);
     } catch (err) {
-        setError(
-            err.message || "Unable to load analysis details."
-        );
+      setError(err.message || "Unable to load analysis details.");
     } finally {
-        setHistoryDetailLoading(false);
+      setHistoryDetailLoading(false);
     }
-};
+  };
 
-const closeHistoryDetail = () => {
+  const closeHistoryDetail = () => {
     setHistoryDetail(null);
     setError("");
-};
-
-
- 
+  };
 
   const analyzeEmail = async () => {
     if (!file) {
@@ -122,8 +157,7 @@ const closeHistoryDetail = () => {
       await loadHistory();
     } catch (err) {
       setError(
-        err.message ||
-          "Unable to connect to the MailSentinel backend."
+        err.message || "Unable to connect to the MailSentinel backend."
       );
     } finally {
       setLoading(false);
@@ -147,9 +181,7 @@ const closeHistoryDetail = () => {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(
-          data.error || "Report generation failed."
-        );
+        throw new Error(data.error || "Report generation failed.");
       }
 
       const blob = await response.blob();
@@ -188,10 +220,6 @@ const closeHistoryDetail = () => {
           ? "low"
           : "safe";
 
-  const isMalicious =
-    ai?.is_malicious === true ||
-    risk?.classification === "phishing";
-
   return (
     <div className="app">
       <header className="topbar">
@@ -215,9 +243,7 @@ const closeHistoryDetail = () => {
       <main>
         <section className="hero">
           <div>
-            <p className="eyebrow">
-              EMAIL THREAT ANALYSIS PLATFORM
-            </p>
+            <p className="eyebrow">EMAIL THREAT ANALYSIS PLATFORM</p>
 
             <h2>
               Detect threats.
@@ -226,10 +252,9 @@ const closeHistoryDetail = () => {
             </h2>
 
             <p className="hero-text">
-              Analyze email headers, URLs, HTML content,
-              attachments, deterministic risk signals and
-              AI-powered threat intelligence through one
-              unified security pipeline.
+              Analyze email headers, URLs, HTML content, attachments,
+              deterministic risk signals and AI-powered threat intelligence
+              through one unified security pipeline.
             </p>
           </div>
 
@@ -257,47 +282,35 @@ const closeHistoryDetail = () => {
 
             <Upload size={42} />
 
-            <strong>
-              {file
-                ? file.name
-                : "Drop .eml file here"}
-            </strong>
+            <strong>{file ? file.name : "Drop .eml file here"}</strong>
 
             <span>
-              {file
-                ? `${(file.size / 1024).toFixed(1)} KB`
-                : "or click to browse"}
+              {file ? `${(file.size / 1024).toFixed(1)} KB` : "or click to browse"}
             </span>
           </label>
 
           {error && (
-            <div className="error-box">
+            <div className="error-box" role="alert">
               <XCircle size={20} />
               {error}
             </div>
           )}
 
           <button
-            className="analyze-button"
+            className="btn btn-primary analyze-button"
             onClick={analyzeEmail}
             disabled={!file || loading}
           >
             <Activity size={20} />
-
-            {loading
-              ? "ANALYZING..."
-              : "ANALYZE EMAIL"}
+            {loading ? "Analyzing..." : "Analyze Email"}
           </button>
         </section>
 
         {result && (
           <>
-            <section
-              className={`risk-banner ${riskClass}`}
-            >
+            <section className={`risk-banner ${riskClass}`}>
               <div className="risk-icon">
-                {riskClass === "safe" ||
-                riskClass === "low" ? (
+                {riskClass === "safe" || riskClass === "low" ? (
                   <CheckCircle size={38} />
                 ) : (
                   <AlertTriangle size={38} />
@@ -305,198 +318,87 @@ const closeHistoryDetail = () => {
               </div>
 
               <div>
-                <span>FINAL CLASSIFICATION</span>
-
+                <span className="field-label">FINAL CLASSIFICATION</span>
                 <h2>
-                  {risk?.classification
-                    ?.replaceAll("_", " ")
-                    .toUpperCase() || "UNKNOWN"}
+                  {formatUpper(risk?.classification) || "UNKNOWN"}
                 </h2>
               </div>
 
               <div className="risk-score">
-                <span>RISK SCORE</span>
-
-                <strong>
-                  {risk?.score ?? 0}
-                </strong>
-
+                <span className="field-label">RISK SCORE</span>
+                <strong>{risk?.score ?? 0}</strong>
                 <small>/ 100</small>
               </div>
             </section>
 
-
             {result?.quarantine && (
-  <section
-    className={`quarantine-banner ${
-      result.quarantine.status === "quarantined"
-        ? "quarantined"
-        : result.quarantine.status === "quarantine_failed"
-          ? "quarantine-failed"
-          : "not-quarantined"
-    }`}
-  >
-    <div className="quarantine-icon">
-      {result.quarantine.status === "quarantined" ? (
-        <Lock size={25} />
-      ) : result.quarantine.status === "quarantine_failed" ? (
-        <AlertTriangle size={25} />
-      ) : (
-        <CheckCircle size={25} />
-      )}
-    </div>
+              <section
+                className={`quarantine-banner ${
+                  result.quarantine.status === "quarantined"
+                    ? "quarantined"
+                    : result.quarantine.status === "quarantine_failed"
+                      ? "quarantine-failed"
+                      : "not-quarantined"
+                }`}
+              >
+                <div className="quarantine-icon">
+                  {result.quarantine.status === "quarantined" ? (
+                    <Lock size={25} />
+                  ) : result.quarantine.status === "quarantine_failed" ? (
+                    <AlertTriangle size={25} />
+                  ) : (
+                    <CheckCircle size={25} />
+                  )}
+                </div>
 
-    <div className="quarantine-content">
-      <strong>
-        {result.quarantine.status === "quarantined"
-          ? "EMAIL QUARANTINED"
-          : result.quarantine.status === "quarantine_failed"
-            ? "QUARANTINE FAILED"
-            : "EMAIL NOT QUARANTINED"}
-      </strong>
+                <div className="quarantine-content">
+                  <strong>
+                    {result.quarantine.status === "quarantined"
+                      ? "EMAIL QUARANTINED"
+                      : result.quarantine.status === "quarantine_failed"
+                        ? "QUARANTINE FAILED"
+                        : "EMAIL NOT QUARANTINED"}
+                  </strong>
 
-      <span>
-        {result.quarantine.reason ||
-          "No quarantine information available."}
-      </span>
+                  <span>
+                    {result.quarantine.reason ||
+                      "No quarantine information available."}
+                  </span>
 
-      {result.quarantine.original_filename && (
-        <span>
-          File: {result.quarantine.original_filename}
-        </span>
-      )}
+                  {result.quarantine.original_filename && (
+                    <span>File: {result.quarantine.original_filename}</span>
+                  )}
 
-      {result.quarantine.quarantine_id && (
-        <span>
-          Quarantine ID: {result.quarantine.quarantine_id}
-        </span>
-      )}
-    </div>
+                  {result.quarantine.quarantine_id && (
+                    <span>
+                      Quarantine ID: {result.quarantine.quarantine_id}
+                    </span>
+                  )}
+                </div>
 
-    <span className="quarantine-status">
-      {result.quarantine.status
-        ?.replaceAll("_", " ")
-        .toUpperCase()}
-    </span>
-  </section>
-)}
-
-              
+                <span className="quarantine-status">
+                  {formatUpper(result.quarantine.status)}
+                </span>
+              </section>
+            )}
 
             <section className="stats-grid">
               <Stat
                 title="Finding Score"
-                value={
-                  risk?.score_breakdown
-                    ?.finding_score ?? 0
-                }
+                value={risk?.score_breakdown?.finding_score ?? 0}
               />
-
               <Stat
                 title="Correlation"
-                value={
-                  risk?.score_breakdown
-                    ?.correlation_score ?? 0
-                }
+                value={risk?.score_breakdown?.correlation_score ?? 0}
               />
-
-              <Stat
-                title="Confidence"
-                value={
-                  risk?.confidence || "Unknown"
-                }
-              />
-
+              <Stat title="Confidence" value={risk?.confidence || "Unknown"} />
               <Stat
                 title="Action"
-                value={
-                  risk?.recommended_action
-                    ?.replaceAll("_", " ") ||
-                  "Unknown"
-                }
+                value={formatLabel(risk?.recommended_action)}
               />
             </section>
 
-            <section className="panel ai-panel">
-              <div className="panel-header">
-                <h3>
-                  <BrainCircuit size={20} />
-                  AI SECURITY ANALYSIS
-                </h3>
-
-                <span
-                  className={`badge ${
-                    ai?.status === "completed"
-                      ? "success"
-                      : "danger"
-                  }`}
-                >
-                  {ai?.status || "unknown"}
-                </span>
-              </div>
-
-              <div className="ai-grid">
-                <div className="ai-verdict">
-                  <span>THREAT LEVEL</span>
-                  <strong>
-                    {ai?.threat_level ||
-                      "UNKNOWN"}
-                  </strong>
-                </div>
-
-                <div className="ai-verdict">
-                  <span>AI CONFIDENCE</span>
-                  <strong>
-                    {ai?.confidence ||
-                      "UNKNOWN"}
-                  </strong>
-                </div>
-
-                <div className="ai-verdict">
-                  <span>MALICIOUS</span>
-                  <strong>
-                    {ai?.is_malicious
-                      ? "YES"
-                      : "NO"}
-                  </strong>
-                </div>
-              </div>
-
-              <div className="ai-content">
-                <h4>AI Summary</h4>
-
-                <p>
-                  {ai?.summary ||
-                    "No AI summary available."}
-                </p>
-
-                <h4>User Explanation</h4>
-
-                <p>
-                  {ai?.user_explanation ||
-                    "No explanation available."}
-                </p>
-
-                {Array.isArray(
-                  ai?.key_findings
-                ) &&
-                  ai.key_findings.length > 0 && (
-                    <>
-                      <h4>Key Findings</h4>
-
-                      <ul>
-                        {ai.key_findings.map(
-                          (finding, index) => (
-                            <li key={index}>
-                              {finding}
-                            </li>
-                          )
-                        )}
-                      </ul>
-                    </>
-                  )}
-              </div>
-            </section>
+            <AiAnalysisPanel ai={ai} />
 
             <section className="dashboard-grid">
               <div className="panel">
@@ -507,35 +409,21 @@ const closeHistoryDetail = () => {
                   </h3>
                 </div>
 
-                {Object.entries(
-                  risk?.analyzer_status || {}
-                ).map(([name, status]) => (
-                  <div
-                    className="analyzer-row"
-                    key={name}
-                  >
-                    <div>
-                      <strong>
-                        {name
-                          .replaceAll("_", " ")
-                          .toUpperCase()}
-                      </strong>
+                {Object.entries(risk?.analyzer_status || {}).map(
+                  ([name, status]) => (
+                    <div className="analyzer-row" key={name}>
+                      <strong>{formatUpper(name)}</strong>
+                      <StatusBadge
+                        value={status}
+                        tone={
+                          String(status).includes("risk")
+                            ? "high"
+                            : severityTone(status)
+                        }
+                      />
                     </div>
-
-                    <span
-                      className={
-                        status.includes("risk")
-                          ? "badge danger"
-                          : "badge success"
-                      }
-                    >
-                      {status.replaceAll(
-                        "_",
-                        " "
-                      )}
-                    </span>
-                  </div>
-                ))}
+                  )
+                )}
               </div>
 
               <div className="panel">
@@ -547,36 +435,24 @@ const closeHistoryDetail = () => {
                 </div>
 
                 {attachments.length === 0 ? (
-                  <p className="empty">
-                    No attachments detected.
-                  </p>
+                  <p className="empty">No attachments detected.</p>
                 ) : (
-                  attachments.map(
-                    (attachment, index) => (
-                      <div
-                        className="attachment-row"
-                        key={index}
-                      >
-                        <div>
-                          <strong>
-                            {attachment.filename ||
-                              "Unknown file"}
-                          </strong>
-
-                          <span>
-                            SHA256:{" "}
-                            {attachment.sha256 ||
-                              "Unavailable"}
-                          </span>
-                        </div>
-
-                        <span className="badge danger">
-                          {attachment.status ||
-                            "UNKNOWN"}
+                  attachments.map((attachment, index) => (
+                    <div className="attachment-row" key={index}>
+                      <div>
+                        <strong>
+                          {attachment.filename || "Unknown file"}
+                        </strong>
+                        <span>
+                          SHA256: {attachment.sha256 || "Unavailable"}
                         </span>
                       </div>
-                    )
-                  )
+                      <StatusBadge
+                        value={attachment.status || "UNKNOWN"}
+                        tone="high"
+                      />
+                    </div>
+                  ))
                 )}
               </div>
             </section>
@@ -586,462 +462,509 @@ const closeHistoryDetail = () => {
                 <h3>EMAIL INFORMATION</h3>
               </div>
 
-              <div className="email-info">
-                <div>
-                  <span>FILE</span>
-                  <strong>
-                    {result.email?.file ||
-                      "Unknown"}
-                  </strong>
-                </div>
-
-                <div>
-                  <span>SUBJECT</span>
-                  <strong>
-                    {result.parser?.headers
-                      ?.subject || "Unknown"}
-                  </strong>
-                </div>
-
-                <div>
-                  <span>FROM</span>
-                  <strong>
-                    {result.parser?.headers
-                      ?.from || "Unknown"}
-                  </strong>
-                </div>
-
-                <div>
-                  <span>ATTACHMENTS</span>
-                  <strong>
-                    {result.parser?.attachments
-                      ?.count ?? 0}
-                  </strong>
-                </div>
+              <div className="info-table">
+                <InfoRow label="File">
+                  {result.email?.file || "Unknown"}
+                </InfoRow>
+                <InfoRow label="Subject">
+                  {result.parser?.headers?.subject || "Unknown"}
+                </InfoRow>
+                <InfoRow label="From">
+                  {result.parser?.headers?.from || "Unknown"}
+                </InfoRow>
+                <InfoRow label="Attachments">
+                  {result.parser?.attachments?.count ?? 0}
+                </InfoRow>
               </div>
             </section>
 
             <section className="report-panel">
-              <div>
+              <div className="report-panel-copy">
                 <FileText size={28} />
-
                 <div>
-                  <h3>
-                    SECURITY INCIDENT REPORT
-                  </h3>
-
+                  <h3>SECURITY INCIDENT REPORT</h3>
                   <p>
-                    Generate a professional PDF
-                    security report containing the
-                    deterministic analysis, AI
-                    assessment, findings and final
+                    Generate a professional PDF security report containing the
+                    deterministic analysis, AI assessment, findings and final
                     verdict.
                   </p>
                 </div>
               </div>
 
               <button
-                className="report-button"
+                className="btn btn-primary report-button"
                 onClick={downloadReport}
                 disabled={reportLoading}
+                aria-label="Download PDF Report"
               >
                 <Download size={19} />
-
-                {reportLoading
-                  ? "GENERATING..."
-                  : "DOWNLOAD PDF REPORT"}
+                {reportLoading ? "Generating..." : "Download PDF Report"}
               </button>
             </section>
           </>
         )}
 
-        <section className="panel history-panel">
-  <div className="panel-header">
-    <h3>
-      <FileText size={20} />
-      ANALYSIS HISTORY
-    </h3>
-
-    <button
-      className="history-refresh"
-      onClick={loadHistory}
-      disabled={historyLoading}
-    >
-      {historyLoading ? "LOADING..." : "REFRESH"}
-    </button>
-  </div>
-
-  {history.length === 0 ? (
-    <p className="empty">
-      No analysis history available.
-    </p>
-  ) : (
-    <div className="history-list">
-      {history.map((record) => {
-        const classification =
-          record.classification || "unknown";
-
-        const historyClass =
-          classification === "phishing"
-            ? "critical"
-            : classification === "suspicious"
-              ? "high"
-              : classification === "low_risk"
-                ? "low"
-                : "safe";
-
-        return (
-          <div
-            className="history-row"
-            key={record.id}
-          >
-            <div className="history-main">
-              <strong>
-                {record.original_filename ||
-                  "Unknown file"}
-              </strong>
-
-              <span>
-                {record.subject || "No subject"}
-              </span>
-
-              <small>
-                {record.sender ||
-                  "Unknown sender"}
-              </small>
-            </div>
-
-            <div className="history-result">
-              <span
-                className={`history-class ${historyClass}`}
-              >
-                {classification
-                  .replaceAll("_", " ")
-                  .toUpperCase()}
-              </span>
-
-              <strong>
-                {record.risk_score ?? 0}/100
-              </strong>
-
-              <span>
-                {record.quarantine_status
-                  ?.replaceAll("_", " ") ||
-                  "unknown"}
-              </span>
+        {!historyDetail && (
+          <section className="panel history-panel">
+            <div className="panel-header panel-header-actions">
+              <h3>
+                <FileText size={20} />
+                ANALYSIS HISTORY
+              </h3>
 
               <button
-                className="history-view-button"
-                onClick={() =>
-                  loadHistoryDetail(record.id)
-                }
-                disabled={historyDetailLoading}
+                className="btn btn-secondary"
+                onClick={loadHistory}
+                disabled={historyLoading}
+                aria-label="Refresh analysis history"
               >
-                {historyDetailLoading
-                  ? "LOADING..."
-                  : "VIEW DETAILS"}
+                <RefreshCw size={16} />
+                {historyLoading ? "Loading..." : "Refresh"}
               </button>
             </div>
-          </div>
-        );
-      })}
-    </div>
-  )}
-</section>
 
-{historyDetail && (
-  <section className="panel history-detail-panel">
-    <div className="panel-header">
-      <h3>
-        <FileText size={20} />
-        ANALYSIS DETAILS
-      </h3>
+            {history.length === 0 ? (
+              <p className="empty">No analysis history available.</p>
+            ) : (
+              <div className="history-list">
+                {history.map((record) => {
+                  const classification = record.classification || "unknown";
+                  const historyClass =
+                    classification === "phishing"
+                      ? "critical"
+                      : classification === "suspicious"
+                        ? "high"
+                        : classification === "low_risk"
+                          ? "low"
+                          : "safe";
 
-      <button
-        className="history-refresh"
-        onClick={closeHistoryDetail}
-      >
-        BACK TO HISTORY
-      </button>
-    </div>
+                  return (
+                    <article className="history-card" key={record.id}>
+                      <div className="history-card-top">
+                        <div className="history-main">
+                          <strong>
+                            {record.original_filename || "Unknown file"}
+                          </strong>
+                          <span className="history-subject">
+                            {record.subject || "No subject"}
+                          </span>
+                          <small>
+                            {record.sender || "Unknown sender"}
+                          </small>
+                        </div>
 
-    <div className="detail-header">
-      <div>
-        <span>ANALYSIS ID</span>
-        <strong>#{historyDetail.analysis_id}</strong>
-      </div>
+                        <StatusBadge
+                          value={formatUpper(classification)}
+                          tone={historyClass}
+                        />
+                      </div>
 
-      <div>
-        <span>FILE</span>
-        <strong>
-          {historyDetail.email?.file || "Unknown"}
-        </strong>
-      </div>
+                      <div className="history-card-meta">
+                        <div>
+                          <span className="field-label">Risk Score</span>
+                          <strong>
+                            {record.risk_score ?? 0}
+                            <span className="muted-inline"> / 100</span>
+                          </strong>
+                        </div>
 
-      <div>
-        <span>CLASSIFICATION</span>
-        <strong>
-          {historyDetail.risk?.classification
-            ?.replaceAll("_", " ")
-            .toUpperCase() || "UNKNOWN"}
-        </strong>
-      </div>
+                        <div>
+                          <span className="field-label">Status</span>
+                          <strong>
+                            {formatUpper(record.quarantine_status) ||
+                              "UNKNOWN"}
+                          </strong>
+                        </div>
+                      </div>
 
-      <div>
-        <span>RISK SCORE</span>
-        <strong>
-          {historyDetail.risk?.score ?? 0}/100
-        </strong>
-      </div>
-    </div>
-
-    <div className="detail-grid">
-
-      <div className="detail-card">
-        <h4>EMAIL INFORMATION</h4>
-
-        <p>
-          <strong>Subject:</strong>{" "}
-          {historyDetail.parser?.headers?.subject ||
-            "No subject"}
-        </p>
-
-        <p>
-          <strong>From:</strong>{" "}
-          {historyDetail.parser?.headers?.from ||
-            "Unknown"}
-        </p>
-
-        <p>
-          <strong>To:</strong>{" "}
-          {historyDetail.parser?.headers?.to ||
-            "Unknown"}
-        </p>
-
-        <p>
-          <strong>Reply-To:</strong>{" "}
-          {historyDetail.parser?.headers?.reply_to ||
-            "None"}
-        </p>
-
-        <p>
-          <strong>File Size:</strong>{" "}
-          {historyDetail.email?.size ?? 0} bytes
-        </p>
-      </div>
-
-      <div className="detail-card">
-        <h4>SECURITY DECISION</h4>
-
-        <p>
-          <strong>Classification:</strong>{" "}
-          {historyDetail.risk?.classification ||
-            "Unknown"}
-        </p>
-
-        <p>
-          <strong>Risk Score:</strong>{" "}
-          {historyDetail.risk?.score ?? 0}/100
-        </p>
-
-        <p>
-          <strong>Confidence:</strong>{" "}
-          {historyDetail.risk?.confidence ||
-            "Unknown"}
-        </p>
-
-        <p>
-          <strong>Recommended Action:</strong>{" "}
-          {historyDetail.risk?.recommended_action ||
-            "Unknown"}
-        </p>
-
-        <p>
-          <strong>Security Override:</strong>{" "}
-          {historyDetail.risk?.security_override
-            ? "YES"
-            : "NO"}
-        </p>
-      </div>
-
-    </div>
-
-    <div className="detail-card">
-      <h4>ANALYZER SCORES</h4>
-
-      <div className="detail-stats">
-        {Object.entries(
-          historyDetail.risk?.analyzer_scores || {}
-        ).map(([name, score]) => (
-          <div key={name}>
-            <span>
-              {name
-                .replaceAll("_", " ")
-                .toUpperCase()}
-            </span>
-
-            <strong>{score}</strong>
-          </div>
-        ))}
-      </div>
-    </div>
-
-    <div className="detail-card">
-      <h4>SECURITY FINDINGS</h4>
-
-      {historyDetail.risk?.findings?.length ? (
-        <div className="detail-findings">
-          {historyDetail.risk.findings.map(
-            (finding, index) => (
-              <div
-                className="finding-row"
-                key={index}
-              >
-                <div>
-                  <strong>
-                    {finding.indicator ||
-                      "Security finding"}
-                  </strong>
-
-                  <p>
-                    {finding.description ||
-                      "No description available."}
-                  </p>
-                </div>
-
-                <span className="badge danger">
-                  {finding.severity ||
-                    "unknown"}
-                </span>
+                      <div className="history-card-actions">
+                        <button
+                          className="btn btn-primary history-view-button"
+                          onClick={() => loadHistoryDetail(record.id)}
+                          disabled={historyDetailLoading}
+                          aria-label={`View details for ${
+                            record.original_filename || "analysis"
+                          }`}
+                        >
+                          {historyDetailLoading
+                            ? "Loading..."
+                            : "View Details"}
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
-            )
-          )}
-        </div>
-      ) : (
-        <p className="empty">
-          No security findings recorded.
-        </p>
-      )}
-    </div>
+            )}
+          </section>
+        )}
 
-    <div className="detail-card">
-      <h4>AI SECURITY ANALYSIS</h4>
-
-      <div className="detail-stats">
-        <div>
-          <span>STATUS</span>
-          <strong>
-            {historyDetail.ai_analysis?.status ||
-              "UNKNOWN"}
-          </strong>
-        </div>
-
-        <div>
-          <span>THREAT LEVEL</span>
-          <strong>
-            {historyDetail.ai_analysis?.threat_level ||
-              "UNKNOWN"}
-          </strong>
-        </div>
-
-        <div>
-          <span>CONFIDENCE</span>
-          <strong>
-            {historyDetail.ai_analysis?.confidence ||
-              "UNKNOWN"}
-          </strong>
-        </div>
-
-        <div>
-          <span>MALICIOUS</span>
-          <strong>
-            {historyDetail.ai_analysis?.is_malicious
-              ? "YES"
-              : "NO"}
-          </strong>
-        </div>
-      </div>
-
-      <p>
-        {historyDetail.ai_analysis?.summary ||
-          "No AI summary available."}
-      </p>
-    </div>
-
-    <div className="detail-card">
-      <h4>QUARANTINE STATUS</h4>
-
-      <p>
-        <strong>Status:</strong>{" "}
-        {historyDetail.quarantine?.status ||
-          "Unknown"}
-      </p>
-
-      <p>
-        <strong>Reason:</strong>{" "}
-        {historyDetail.quarantine?.reason ||
-          "No quarantine reason recorded."}
-      </p>
-
-      {historyDetail.quarantine?.quarantine_id && (
-        <p>
-          <strong>Quarantine ID:</strong>{" "}
-          {historyDetail.quarantine.quarantine_id}
-        </p>
-      )}
-    </div>
-
-    <div className="detail-card">
-      <h4>URL ANALYSIS</h4>
-
-      {historyDetail.analyzers?.url_analyzer?.urls
-        ?.length ? (
-        historyDetail.analyzers.url_analyzer.urls.map(
-          (item, index) => (
-            <div
-              className="finding-row"
-              key={index}
-            >
-              <div>
-                <strong>{item.url}</strong>
-
-                <p>
-                  Domain:{" "}
-                  {item.hostname || "Unknown"}
-                </p>
-              </div>
-
-              <span className="badge">
-                {item.status || "unknown"}
-              </span>
-            </div>
-          )
-        )
-      ) : (
-        <p className="empty">
-          No URLs recorded.
-        </p>
-      )}
-    </div>
-
-  </section>
-)}
-
-
-       </main>
+        {historyDetail && (
+          <HistoryDetailPanel
+            detail={historyDetail}
+            onBack={closeHistoryDetail}
+          />
+        )}
+      </main>
 
       <footer>
-        MailSentinel • Email Security Intrusion
-        Detection & Prevention System
+        MailSentinel • Email Security Intrusion Detection & Prevention System
       </footer>
     </div>
   );
 }
 
+function AiAnalysisPanel({ ai }) {
+  const threatTone = severityTone(ai?.threat_level);
+  const confidenceTone = severityTone(ai?.confidence);
+  const maliciousTone = ai?.is_malicious ? "critical" : "low";
+
+  return (
+    <section className="panel ai-panel">
+      <div className="panel-header panel-header-actions">
+        <h3>
+          <BrainCircuit size={20} />
+          AI SECURITY ANALYSIS
+        </h3>
+
+        <StatusBadge
+          value={formatUpper(ai?.status || "unknown")}
+          tone={ai?.status === "completed" ? "low" : "critical"}
+        />
+      </div>
+
+      <div className="ai-grid">
+        <AiVerdictCard
+          icon={<Shield size={22} />}
+          label="Threat Level"
+          value={formatUpper(ai?.threat_level || "UNKNOWN")}
+          tone={threatTone}
+        />
+        <AiVerdictCard
+          icon={<Sparkles size={22} />}
+          label="AI Confidence"
+          value={formatUpper(ai?.confidence || "UNKNOWN")}
+          tone={confidenceTone}
+        />
+        <AiVerdictCard
+          icon={<Bug size={22} />}
+          label="Malicious"
+          value={ai?.is_malicious ? "YES" : "NO"}
+          tone={maliciousTone}
+        />
+      </div>
+
+      <div className="ai-content">
+        <div className="ai-block">
+          <h4>AI Summary</h4>
+          <p>{ai?.summary || "No AI summary available."}</p>
+        </div>
+
+        <div className="ai-block">
+          <h4>User Explanation</h4>
+          <p>{ai?.user_explanation || "No explanation available."}</p>
+        </div>
+
+        {Array.isArray(ai?.key_findings) && ai.key_findings.length > 0 && (
+          <div className="ai-block">
+            <h4>Key Findings</h4>
+            <ul className="key-findings">
+              {ai.key_findings.map((finding, index) => (
+                <li key={index}>{finding}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function HistoryDetailPanel({ detail, onBack }) {
+  const risk = detail.risk;
+  const ai = detail.ai_analysis;
+  const classification = risk?.classification || "unknown";
+  const classificationTone = severityTone(classification);
+  const analyzerStatus = risk?.analyzer_status || {};
+  const analyzerScores = risk?.analyzer_scores || {};
+  const findings = risk?.findings || [];
+  const urls = detail.analyzers?.url_analyzer?.urls || [];
+
+  const analyzerNames = Array.from(
+    new Set([
+      ...Object.keys(analyzerStatus),
+      ...Object.keys(analyzerScores),
+    ])
+  );
+
+  return (
+    <section className="panel history-detail-panel">
+      <div className="panel-header panel-header-actions">
+        <h3>
+          <FileText size={20} />
+          ANALYSIS DETAILS
+        </h3>
+
+        <button
+          className="btn btn-secondary"
+          onClick={onBack}
+          aria-label="Back to History"
+        >
+          <ArrowLeft size={16} />
+          Back to History
+        </button>
+      </div>
+
+      <div className="soc-section">
+        <h4 className="soc-section-title">Analysis Overview</h4>
+        <div className="info-table">
+          <InfoRow label="Analysis ID">
+            #{detail.analysis_id}
+          </InfoRow>
+          <InfoRow label="Classification">
+            <StatusBadge
+              value={formatUpper(classification)}
+              tone={classificationTone}
+            />
+          </InfoRow>
+          <InfoRow label="Risk Score">
+            <span className="risk-score-inline">
+              {risk?.score ?? 0}
+              <span className="muted-inline"> / 100</span>
+            </span>
+          </InfoRow>
+          <InfoRow label="Confidence">
+            {risk?.confidence || "Unknown"}
+          </InfoRow>
+          <InfoRow label="Recommended Action">
+            {formatLabel(risk?.recommended_action)}
+          </InfoRow>
+          <InfoRow label="Security Override">
+            {risk?.security_override ? "YES" : "NO"}
+          </InfoRow>
+        </div>
+      </div>
+
+      <div className="soc-section">
+        <h4 className="soc-section-title">Email Information</h4>
+        <div className="info-table">
+          <InfoRow label="File">
+            {detail.email?.file || "Unknown"}
+          </InfoRow>
+          <InfoRow label="Subject">
+            {detail.parser?.headers?.subject || "No subject"}
+          </InfoRow>
+          <InfoRow label="From">
+            {detail.parser?.headers?.from || "Unknown"}
+          </InfoRow>
+          <InfoRow label="To">
+            {detail.parser?.headers?.to || "Unknown"}
+          </InfoRow>
+          <InfoRow label="Reply-To">
+            {detail.parser?.headers?.reply_to || "None"}
+          </InfoRow>
+          <InfoRow label="File Size">
+            {detail.email?.size ?? 0} bytes
+          </InfoRow>
+          <InfoRow label="Attachments">
+            {detail.parser?.attachments?.count ?? 0}
+          </InfoRow>
+        </div>
+      </div>
+
+      <div className="soc-section">
+        <h4 className="soc-section-title">Analyzer Results</h4>
+        {analyzerNames.length === 0 ? (
+          <p className="empty">No analyzer results available.</p>
+        ) : (
+          <div className="analyzer-results">
+            {analyzerNames.map((name) => {
+              const status = analyzerStatus[name];
+              const score = analyzerScores[name];
+              return (
+                <div className="analyzer-result-row" key={name}>
+                  <div>
+                    <strong>{formatUpper(name)}</strong>
+                    {score != null && (
+                      <span className="analyzer-score">Score: {score}</span>
+                    )}
+                  </div>
+                  <StatusBadge
+                    value={status ? formatUpper(status) : "N/A"}
+                    tone={
+                      status
+                        ? String(status).includes("risk")
+                          ? "high"
+                          : severityTone(status)
+                        : "info"
+                    }
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="soc-section">
+        <h4 className="soc-section-title">Security Findings</h4>
+        {findings.length ? (
+          <div className="findings-list">
+            {findings.map((finding, index) => {
+              const tone = severityTone(finding.severity);
+              return (
+                <article className={`finding-card tone-${tone}`} key={index}>
+                  <StatusBadge
+                    value={formatUpper(finding.severity || "unknown")}
+                    tone={tone}
+                  />
+                  <strong className="finding-name">
+                    {finding.indicator || "Security finding"}
+                  </strong>
+                  <p>
+                    {finding.description || "No description available."}
+                  </p>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="empty">No security findings recorded.</p>
+        )}
+      </div>
+
+      <div className="soc-section">
+        <h4 className="soc-section-title">AI Security Analysis</h4>
+        <div className="ai-grid">
+          <AiVerdictCard
+            icon={<Shield size={22} />}
+            label="Threat Level"
+            value={formatUpper(ai?.threat_level || "UNKNOWN")}
+            tone={severityTone(ai?.threat_level)}
+          />
+          <AiVerdictCard
+            icon={<Sparkles size={22} />}
+            label="AI Confidence"
+            value={formatUpper(ai?.confidence || "UNKNOWN")}
+            tone={severityTone(ai?.confidence)}
+          />
+          <AiVerdictCard
+            icon={<Bug size={22} />}
+            label="Malicious"
+            value={ai?.is_malicious ? "YES" : "NO"}
+            tone={ai?.is_malicious ? "critical" : "low"}
+          />
+        </div>
+
+        <div className="ai-content">
+          <div className="ai-block">
+            <h4>AI Summary</h4>
+            <p>{ai?.summary || "No AI summary available."}</p>
+          </div>
+
+          {(ai?.user_explanation ||
+            (Array.isArray(ai?.key_findings) &&
+              ai.key_findings.length > 0)) && (
+            <>
+              {ai?.user_explanation && (
+                <div className="ai-block">
+                  <h4>User Explanation</h4>
+                  <p>{ai.user_explanation}</p>
+                </div>
+              )}
+
+              {Array.isArray(ai?.key_findings) &&
+                ai.key_findings.length > 0 && (
+                  <div className="ai-block">
+                    <h4>Key Findings</h4>
+                    <ul className="key-findings">
+                      {ai.key_findings.map((finding, index) => (
+                        <li key={index}>{finding}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="soc-section">
+        <h4 className="soc-section-title">Quarantine Status</h4>
+        <div className="info-table">
+          <InfoRow label="Status">
+            <StatusBadge
+              value={formatUpper(detail.quarantine?.status || "Unknown")}
+              tone={severityTone(detail.quarantine?.status)}
+            />
+          </InfoRow>
+          <InfoRow label="Reason">
+            {detail.quarantine?.reason ||
+              "No quarantine reason recorded."}
+          </InfoRow>
+          {detail.quarantine?.quarantine_id && (
+            <InfoRow label="Quarantine ID">
+              {detail.quarantine.quarantine_id}
+            </InfoRow>
+          )}
+        </div>
+      </div>
+
+      <div className="soc-section">
+        <h4 className="soc-section-title">
+          <Link2 size={16} />
+          URL Analysis
+        </h4>
+        {urls.length ? (
+          <div className="findings-list">
+            {urls.map((item, index) => (
+              <article className="finding-card" key={index}>
+                <StatusBadge
+                  value={formatUpper(item.status || "unknown")}
+                  tone={severityTone(item.status)}
+                />
+                <strong className="finding-name">{item.url}</strong>
+                <p>Domain: {item.hostname || "Unknown"}</p>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="empty">No URLs recorded.</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function AiVerdictCard({ icon, label, value, tone = "info" }) {
+  return (
+    <div className={`ai-verdict-card tone-${tone}`}>
+      <div className="ai-verdict-icon" aria-hidden="true">
+        {icon}
+      </div>
+      <span className="ai-verdict-label">{label}</span>
+      <strong className="ai-verdict-value">{value}</strong>
+    </div>
+  );
+}
+
+function InfoRow({ label, children }) {
+  return (
+    <div className="info-row">
+      <span className="info-label">{label}</span>
+      <div className="info-value">{children}</div>
+    </div>
+  );
+}
+
+function StatusBadge({ value, tone = "info" }) {
+  return <span className={`status-badge tone-${tone}`}>{value}</span>;
+}
+
 function Stat({ title, value }) {
   return (
     <div className="stat">
-      <span>{title}</span>
+      <span className="field-label">{title}</span>
       <strong>{value}</strong>
     </div>
   );

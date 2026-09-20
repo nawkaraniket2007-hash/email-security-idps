@@ -60,3 +60,4 @@ backend/reports/
 # Archives
 *.zip
 EOF
+.vercel/
